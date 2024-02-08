@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"strconv"
 
 	"github.com/graphql-go/graphql"
@@ -122,10 +123,19 @@ var RootQuery = graphql.NewObject(
 					if err != nil {
 						return nil, err
 					}
-					_, err = authorize.GenerateJwt(uint(user.Id), false, false, Secret)
+					token, err := authorize.GenerateJwt(uint(user.Id), false, false, Secret)
 					if err != nil {
 						return nil, err
 					}
+					cookie := http.Cookie{
+						Name:     "jwtToken",
+						Value:    token,
+						MaxAge:   3600 * 24 * 30,
+						HttpOnly: true,
+						Secure:   false,
+					}
+					w := p.Context.Value("httpResponseWriter").(http.ResponseWriter)
+					http.SetCookie(w, &cookie)
 					return user, nil
 				},
 			},
@@ -147,10 +157,20 @@ var RootQuery = graphql.NewObject(
 					if err != nil {
 						return nil, err
 					}
-					_, err = authorize.GenerateJwt(uint(res.Id), true, false, Secret)
+					token, err := authorize.GenerateJwt(uint(res.Id), true, false, Secret)
 					if err != nil {
 						return nil, err
 					}
+					cookie := http.Cookie{
+						Name:     "jwtToken",
+						Value:    token,
+						MaxAge:   3600 * 24 * 30,
+						HttpOnly: true,
+						Secure:   false,
+					}
+					w := p.Context.Value("httpResponseWriter").(http.ResponseWriter)
+					http.SetCookie(w, &cookie)
+
 					return res, nil
 				},
 			},
@@ -172,10 +192,19 @@ var RootQuery = graphql.NewObject(
 					if err != nil {
 						return nil, err
 					}
-					_, err = authorize.GenerateJwt(uint(res.Id), false, true, Secret)
+					token, err := authorize.GenerateJwt(uint(res.Id), false, true, Secret)
 					if err != nil {
 						return nil, fmt.Errorf("failed to generate token")
 					}
+					cookie := http.Cookie{
+						Name:     "jwtToken",
+						Value:    token,
+						MaxAge:   3600 * 24 * 30,
+						HttpOnly: true,
+						Secure:   false,
+					}
+					w := p.Context.Value("httpResponseWriter").(http.ResponseWriter)
+					http.SetCookie(w, &cookie)
 					return res, nil
 				},
 			},
