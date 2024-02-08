@@ -7,7 +7,7 @@ require (
 	github.com/graphql-go/graphql v0.8.1
 	github.com/graphql-go/handler v0.2.3
 	github.com/joho/godotenv v1.5.1
-	github.com/vishnusunil243/proto-files v0.0.0-20240207171514-29d912d69f62
+	github.com/vishnusunil243/proto-files v0.0.0-20240208140852-0f7b0ef10ff9
 	google.golang.org/grpc v1.61.0
 	google.golang.org/protobuf v1.32.0
 )
