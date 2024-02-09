@@ -89,7 +89,8 @@ var RootQuery = graphql.NewObject(
 						}
 						res = append(res, prod)
 					}
-					return res, err
+					fmt.Println(res)
+					return res, nil
 				},
 			},
 			"product": &graphql.Field{
@@ -192,7 +193,7 @@ var RootQuery = graphql.NewObject(
 					if err != nil {
 						return nil, err
 					}
-					token, err := authorize.GenerateJwt(uint(res.Id), false, true, Secret)
+					token, err := authorize.GenerateJwt(uint(res.Id), true, true, Secret)
 					if err != nil {
 						return nil, fmt.Errorf("failed to generate token")
 					}
@@ -207,6 +208,77 @@ var RootQuery = graphql.NewObject(
 					http.SetCookie(w, &cookie)
 					return res, nil
 				},
+			},
+			"GetAllAdmins": &graphql.Field{
+				Type: graphql.NewList(UserType),
+				Resolve: middleware.SuperAdminMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					admins, err := UserConn.GetAllAdmins(context.Background(), &emptypb.Empty{})
+					if err != nil {
+						return nil, err
+					}
+					var res []*pb.UserSignupResponse
+					for {
+						admin, err := admins.Recv()
+						if err == io.EOF {
+							break
+						}
+						fmt.Println(admin.Name)
+						if err != nil {
+							fmt.Println(err.Error())
+						}
+						res = append(res, admin)
+					}
+					fmt.Println(res)
+					return res, nil
+				}),
+			},
+			"GetAllUsers": &graphql.Field{
+				Type: graphql.NewList(UserType),
+				Resolve: middleware.AdminMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					users, err := UserConn.GetAllUsers(context.Background(), &emptypb.Empty{})
+					if err != nil {
+						return nil, err
+					}
+					var res []*pb.UserSignupResponse
+					for {
+						user, err := users.Recv()
+						if err == io.EOF {
+							break
+						}
+						if err != nil {
+							fmt.Println(err.Error())
+						}
+						res = append(res, user)
+
+					}
+					return res, nil
+				}),
+			},
+			"GetUser": &graphql.Field{
+				Type: UserType,
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: middleware.AdminMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					return UserConn.GetUser(context.Background(), &pb.GetUserById{
+						Id: uint32(p.Args["id"].(int)),
+					})
+				}),
+			},
+			"GetAdmin": &graphql.Field{
+				Type: UserType,
+				Args: graphql.FieldConfigArgument{
+					"id": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: middleware.SuperAdminMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					return UserConn.GetAdmin(context.Background(), &pb.GetUserById{
+						Id: uint32(p.Args["id"].(int)),
+					})
+				}),
 			},
 		},
 	},
@@ -302,6 +374,36 @@ var Mutation = graphql.NewObject(
 					}
 					return response, nil
 				},
+			},
+			"AddAdmin": &graphql.Field{
+				Type: UserType,
+				Args: graphql.FieldConfigArgument{
+					"name": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"email": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+					"password": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.String),
+					},
+				},
+				Resolve: middleware.SuperAdminMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					res, err := UserConn.AddAdmin(context.Background(), &pb.UserSignupRequest{
+						Email:    p.Args["email"].(string),
+						Name:     p.Args["name"].(string),
+						Password: p.Args["password"].(string),
+					})
+					if err != nil {
+						return nil, err
+					}
+					response := &pb.UserSignupResponse{
+						Id:    res.Id,
+						Name:  res.Name,
+						Email: res.Email,
+					}
+					return response, err
+				}),
 			},
 		},
 	},
