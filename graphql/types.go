@@ -18,14 +18,16 @@ var (
 	Secret       []byte
 	ProductsConn pb.ProductServiceClient
 	UserConn     pb.UserServiceClient
+	CartConn     pb.CartServiceClient
 )
 
 func RetrieveSecret(secretString string) {
 	Secret = []byte(secretString)
 }
-func Initialize(prodConn pb.ProductServiceClient, userConn pb.UserServiceClient) {
+func Initialize(prodConn pb.ProductServiceClient, userConn pb.UserServiceClient, cartConn pb.CartServiceClient) {
 	ProductsConn = prodConn
 	UserConn = userConn
+	CartConn = cartConn
 }
 
 var ProductType = graphql.NewObject(
@@ -43,6 +45,28 @@ var ProductType = graphql.NewObject(
 			},
 			"quantity": &graphql.Field{
 				Type: graphql.Int,
+			},
+		},
+	},
+)
+var CartType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "cart",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"userId": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"productId": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"quantity": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"total": &graphql.Field{
+				Type: graphql.Float,
 			},
 		},
 	},
@@ -280,6 +304,30 @@ var RootQuery = graphql.NewObject(
 					})
 				}),
 			},
+			"GetAllCartItems": &graphql.Field{
+				Type: graphql.NewList(CartType),
+				Resolve: middleware.UserMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					userIdVal := p.Context.Value("userId").(uint)
+					cartItems, err := CartConn.GetAllCartItems(context.Background(), &pb.UserCartCreate{
+						UserId: uint32(userIdVal),
+					})
+					if err != nil {
+						return nil, err
+					}
+					var res []*pb.GetAllCartResponse
+					for {
+						item, err := cartItems.Recv()
+						if err == io.EOF {
+							break
+						}
+						if err != nil {
+							fmt.Println(err.Error())
+						}
+						res = append(res, item)
+					}
+					return res, nil
+				}),
+			},
 		},
 	},
 )
@@ -367,6 +415,13 @@ var Mutation = graphql.NewObject(
 					if err != nil {
 						return nil, err
 					}
+					cart, err := CartConn.CreateCart(context.Background(), &pb.UserCartCreate{UserId: res.Id})
+					if err != nil {
+						return nil, err
+					}
+					if cart.UserId == 0 {
+						return nil, fmt.Errorf("error creating cart")
+					}
 					response := &pb.UserSignupResponse{
 						Id:    res.Id,
 						Email: res.Email,
@@ -403,6 +458,40 @@ var Mutation = graphql.NewObject(
 						Email: res.Email,
 					}
 					return response, err
+				}),
+			},
+			"AddToCart": &graphql.Field{
+				Type: CartType,
+				Args: graphql.FieldConfigArgument{
+					"productId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+					"quantity": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: middleware.UserMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					userIDval := p.Context.Value("userId").(uint)
+					return CartConn.AddToCart(context.Background(), &pb.AddToCartRequest{
+						UserId:    uint32(userIDval),
+						ProductId: uint32(p.Args["productId"].(int)),
+						Quantity:  int32(p.Args["quantity"].(int)),
+					})
+				}),
+			},
+			"RemoveFromCart": &graphql.Field{
+				Type: CartType,
+				Args: graphql.FieldConfigArgument{
+					"productId": &graphql.ArgumentConfig{
+						Type: graphql.NewNonNull(graphql.Int),
+					},
+				},
+				Resolve: middleware.UserMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					userIdVal := p.Context.Value("userId").(uint)
+					return CartConn.RemoveFromCart(context.Background(), &pb.RemoveFromCartRequest{
+						UserId:    uint32(userIdVal),
+						ProductId: uint32(p.Args["productId"].(int)),
+					})
 				}),
 			},
 		},

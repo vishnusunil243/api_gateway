@@ -34,9 +34,9 @@ func GenerateJwt(userId uint, isadmin bool, isuadmin bool, secret []byte) (strin
 }
 func ValidateToken(tokenstring string, secret []byte) (map[string]interface{}, error) {
 	token, err := jwt.ParseWithClaims(tokenstring, &Payload{}, func(t *jwt.Token) (interface{}, error) {
-		// if t.Method != jwt.SigningMethodES256 {
-		// 	return nil, fmt.Errorf("invalid token")
-		// }
+		if t.Method != jwt.SigningMethodHS256 {
+			return nil, fmt.Errorf("invalid token")
+		}
 		return secret, nil
 	})
 	if err != nil {
