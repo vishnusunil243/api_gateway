@@ -396,14 +396,11 @@ var Mutation = graphql.NewObject(
 					},
 				},
 				Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-					// Extract arguments from ResolveParams
+
 					name, _ := p.Args["name"].(string)
 					email, _ := p.Args["email"].(string)
 					password, _ := p.Args["password"].(string)
 
-					// Validate the input data (you may implement your own validation logic here)
-
-					// For example, check if required fields are not empty
 					if name == "" || email == "" || password == "" {
 						return nil, fmt.Errorf("name, email, and password are required")
 					}
