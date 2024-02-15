@@ -9,6 +9,7 @@ import (
 
 	"github.com/graphql-go/graphql"
 	"github.com/vishnusunil243/api_gateway/authorize"
+	"github.com/vishnusunil243/api_gateway/helper"
 	"github.com/vishnusunil243/api_gateway/middleware"
 	"github.com/vishnusunil243/proto-files/pb"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -90,6 +91,31 @@ var UserType = graphql.NewObject(
 			},
 			"password": &graphql.Field{
 				Type: graphql.String,
+			},
+		},
+	},
+)
+var AddressType = graphql.NewObject(
+	graphql.ObjectConfig{
+		Name: "address",
+		Fields: graphql.Fields{
+			"id": &graphql.Field{
+				Type: graphql.Int,
+			},
+			"city": &graphql.Field{
+				Type: graphql.String,
+			},
+			"district": &graphql.Field{
+				Type: graphql.String,
+			},
+			"state": &graphql.Field{
+				Type: graphql.String,
+			},
+			"road": &graphql.Field{
+				Type: graphql.String,
+			},
+			"userId": &graphql.Field{
+				Type: graphql.Int,
 			},
 		},
 	},
@@ -456,6 +482,27 @@ var RootQuery = graphql.NewObject(
 					return res, nil
 				}),
 			},
+			"GetAddress": &graphql.Field{
+				Type: AddressType,
+				Resolve: middleware.UserMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					userIdVal := p.Context.Value("userId").(uint)
+					res, err := UserConn.GetAddress(context.Background(), &pb.GetUserById{
+						Id: uint32(userIdVal),
+					})
+					if err != nil {
+						return nil, err
+					}
+					address := helper.AddressResponse{
+						UserID:   res.UserId,
+						City:     res.City,
+						District: res.District,
+						State:    res.State,
+						Road:     res.Road,
+					}
+					fmt.Println(address)
+					return address, nil
+				}),
+			},
 		},
 	},
 )
@@ -698,6 +745,42 @@ var Mutation = graphql.NewObject(
 					return WishlistConn.RemoveFromWishlist(context.Background(), &pb.AddToWishlistRequest{
 						UserId:    uint32(userIdVal),
 						ProductId: uint32(p.Args["productId"].(int)),
+					})
+				}),
+			},
+			"AddAddress": &graphql.Field{
+				Type: AddressType,
+				Args: graphql.FieldConfigArgument{
+					"city": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+					"district": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+					"state": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+					"road": &graphql.ArgumentConfig{
+						Type: graphql.String,
+					},
+				},
+				Resolve: middleware.UserMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					userIdVal := p.Context.Value("userId").(uint)
+					return UserConn.AddAddress(context.Background(), &pb.AddAddressRequest{
+						UserId:   uint32(userIdVal),
+						City:     p.Args["city"].(string),
+						State:    p.Args["state"].(string),
+						Road:     p.Args["road"].(string),
+						District: p.Args["district"].(string),
+					})
+				}),
+			},
+			"RemoveAddress": &graphql.Field{
+				Type: AddressType,
+				Resolve: middleware.UserMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					userIdVal := p.Context.Value("userId").(uint)
+					return UserConn.RemoveAddress(context.Background(), &pb.GetUserById{
+						Id: uint32(userIdVal),
 					})
 				}),
 			},

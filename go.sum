@@ -46,6 +46,8 @@ github.com/vishnusunil243/proto-files v0.0.0-20240215073501-b1acd4b985c8 h1:X0ja
 github.com/vishnusunil243/proto-files v0.0.0-20240215073501-b1acd4b985c8/go.mod h1:45SaGn9YE9OatzSOu58l2EAtT3kYYm0GCHc1BXfV/yU=
 github.com/vishnusunil243/proto-files v0.0.0-20240215101550-084750ac5b0c h1:1qsKL4VPGVPpCG+1T4cjxy4B1knad2Tp9y1N4RUny6o=
 github.com/vishnusunil243/proto-files v0.0.0-20240215101550-084750ac5b0c/go.mod h1:45SaGn9YE9OatzSOu58l2EAtT3kYYm0GCHc1BXfV/yU=
+github.com/vishnusunil243/proto-files v0.0.0-20240215140104-9f6019db7b03 h1:JITDdPoNZwMOCMWJXMnqQM5pW7z9K4SZUDuHQhucK+M=
+github.com/vishnusunil243/proto-files v0.0.0-20240215140104-9f6019db7b03/go.mod h1:45SaGn9YE9OatzSOu58l2EAtT3kYYm0GCHc1BXfV/yU=
 golang.org/x/net v0.18.0 h1:mIYleuAkSbHh0tCv7RvjL3F6ZVbLjq4+R7zbOn3Kokg=
 golang.org/x/net v0.18.0/go.mod h1:/czyP5RqHAH4odGYxBJ1qz0+CE5WZ+2j1YgoEo8F2jQ=
 golang.org/x/sys v0.14.0 h1:Vz7Qs629MkJkGyHxUlRHizWJRG2j8fbQKjELVSNhy7Q=
