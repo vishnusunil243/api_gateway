@@ -51,6 +51,9 @@ var ProductType = graphql.NewObject(
 			"quantity": &graphql.Field{
 				Type: graphql.Int,
 			},
+			"price": &graphql.Field{
+				Type: graphql.Int,
+			},
 		},
 	},
 )
@@ -493,6 +496,7 @@ var RootQuery = graphql.NewObject(
 						return nil, err
 					}
 					address := helper.AddressResponse{
+						Id:       res.Id,
 						UserID:   res.UserId,
 						City:     res.City,
 						District: res.District,
@@ -682,10 +686,8 @@ var Mutation = graphql.NewObject(
 					if err != nil {
 						return nil, err
 					}
-					orderMap := map[string]interface{}{
-						"id": order.OrderId,
-					}
-					return orderMap, nil
+
+					return order, nil
 				}),
 			},
 			"UserCancelOrder": &graphql.Field{
