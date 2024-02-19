@@ -77,11 +77,12 @@ func UserMiddleware(next graphql.FieldResolveFn) graphql.FieldResolveFn {
 	return func(p graphql.ResolveParams) (interface{}, error) {
 		r := p.Context.Value("request").(*http.Request)
 		cookie, err := r.Cookie("jwtToken")
-		if err != nil {
-			return nil, err
-		}
+
 		if cookie == nil {
 			return nil, fmt.Errorf("please log in to perform this function")
+		}
+		if err != nil {
+			return nil, err
 		}
 		ctx := p.Context
 		token := cookie.Value
