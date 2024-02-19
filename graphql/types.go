@@ -307,6 +307,25 @@ var RootQuery = graphql.NewObject(
 					return res, nil
 				},
 			},
+			"Logout": &graphql.Field{
+				Type: UserType,
+				Resolve: middleware.UserMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
+					userIdVal := p.Context.Value("userId").(uint)
+					cookie := http.Cookie{
+						Name:     "jwtToken",
+						Value:    "",
+						MaxAge:   -1,
+						HttpOnly: true,
+						Secure:   false,
+					}
+					w := p.Context.Value("httpResponseWriter").(http.ResponseWriter)
+					http.SetCookie(w, &cookie)
+					userIdMap := make(map[string]int)
+					userIdMap["id"] = int(userIdVal)
+					return userIdMap, nil
+				},
+				),
+			},
 			"GetAllAdmins": &graphql.Field{
 				Type: graphql.NewList(UserType),
 				Resolve: middleware.SuperAdminMiddleware(func(p graphql.ResolveParams) (interface{}, error) {
